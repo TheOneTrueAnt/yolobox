@@ -64,7 +64,7 @@ Need something else? You have sudo.
 yolobox                     # Drop into interactive shell
 yolobox run <cmd...>        # Run a single command
 yolobox run claude          # Run Claude Code in sandbox
-yolobox update              # Pull latest base image
+yolobox upgrade             # Update binary and pull latest image
 yolobox config              # Show resolved configuration
 yolobox reset --force       # Delete volumes (fresh start)
 yolobox version             # Show version

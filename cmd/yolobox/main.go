@@ -119,15 +119,6 @@ func runCmd() error {
 			return fmt.Errorf("run requires a command")
 		}
 		return runCommand(cfg, rest, false)
-	case "update":
-		cfg, rest, err := parseBaseFlags("update", args[1:])
-		if err != nil {
-			return err
-		}
-		if len(rest) != 0 {
-			return fmt.Errorf("unexpected args: %v", rest)
-		}
-		return updateImage(cfg)
 	case "upgrade":
 		return upgradeYolobox()
 	case "config":
@@ -163,8 +154,7 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "%sUSAGE:%s\n", colorBold, colorReset)
 	fmt.Fprintln(os.Stderr, "  yolobox                     Start interactive shell in sandbox")
 	fmt.Fprintln(os.Stderr, "  yolobox run <cmd...>        Run a command in sandbox")
-	fmt.Fprintln(os.Stderr, "  yolobox upgrade             Upgrade yolobox binary and image")
-	fmt.Fprintln(os.Stderr, "  yolobox update              Pull the latest base image")
+	fmt.Fprintln(os.Stderr, "  yolobox upgrade             Upgrade binary and pull latest image")
 	fmt.Fprintln(os.Stderr, "  yolobox config              Print resolved configuration")
 	fmt.Fprintln(os.Stderr, "  yolobox reset --force       Remove named volumes (fresh start)")
 	fmt.Fprintln(os.Stderr, "  yolobox version             Show version info")
@@ -389,19 +379,6 @@ func runCommand(cfg Config, command []string, interactive bool) error {
 		return err
 	}
 	return execRuntime(cfg.Runtime, args)
-}
-
-func updateImage(cfg Config) error {
-	info("Pulling latest image: %s", cfg.Image)
-	runtime, err := resolveRuntime(cfg.Runtime)
-	if err != nil {
-		return err
-	}
-	if err := execCommand(runtime, []string{"pull", cfg.Image}); err != nil {
-		return err
-	}
-	success("Image updated!")
-	return nil
 }
 
 func printConfig(cfg Config) error {
