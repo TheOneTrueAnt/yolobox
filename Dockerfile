@@ -59,12 +59,14 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     && apt-get install -y gh \
     && rm -rf /var/lib/apt/lists/*
 
-# Install global npm packages
+# Install global npm packages and AI CLIs
 RUN npm install -g \
     typescript \
     ts-node \
     yarn \
-    pnpm
+    pnpm \
+    @google/gemini-cli \
+    @openai/codex
 
 # Create yolo user with passwordless sudo
 RUN useradd -m -s /bin/bash yolo \
