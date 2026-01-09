@@ -47,7 +47,9 @@ make image
 # 6. Pre-installed tools
 ./yolobox run node --version            # Node.js
 ./yolobox run python3 --version         # Python
-./yolobox run claude --version          # Claude Code (native build)
+./yolobox run claude --version          # Claude Code
+./yolobox run gemini --version          # Gemini CLI
+./yolobox run codex --version           # OpenAI Codex
 ./yolobox run gh --version              # GitHub CLI
 
 # 7. Flag tests (flags go AFTER subcommand)
