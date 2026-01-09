@@ -531,9 +531,13 @@ func buildRunArgs(cfg Config, projectDir string, command []string, interactive b
 	if err != nil {
 		return nil, err
 	}
-	claudeConfigPath := filepath.Join(home, ".claude")
-	if _, err := os.Stat(claudeConfigPath); err == nil {
-		args = append(args, "-v", claudeConfigPath+":/home/yolo/.claude")
+	claudeConfigDir := filepath.Join(home, ".claude")
+	if _, err := os.Stat(claudeConfigDir); err == nil {
+		args = append(args, "-v", claudeConfigDir+":/home/yolo/.claude")
+	}
+	claudeConfigFile := filepath.Join(home, ".claude.json")
+	if _, err := os.Stat(claudeConfigFile); err == nil {
+		args = append(args, "-v", claudeConfigFile+":/home/yolo/.claude.json")
 	}
 
 	// Extra mounts
