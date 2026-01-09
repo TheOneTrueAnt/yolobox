@@ -6,11 +6,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 make build          # Build the yolobox binary
-make test           # Run tests
-make lint           # Run go vet and golangci-lint
+make test           # Run unit tests
+make lint           # Run go vet (and golangci-lint if installed)
 make image          # Build the Docker base image
 make install        # Build and install to ~/.local/bin
 make clean          # Remove built binary
+```
+
+## Verification
+
+After making changes, run this verification sequence:
+
+### Quick verification (after code changes)
+```bash
+make clean && make build && make test && ./yolobox version
+```
+
+### Full verification (after Dockerfile or significant changes)
+```bash
+# 1. Build and unit tests
+make clean && make build && make test
+
+# 2. CLI smoke tests
+./yolobox version
+./yolobox help
+./yolobox config
+
+# 3. Rebuild image (if Dockerfile changed)
+make image
+
+# 4. Container functionality tests
+./yolobox run echo "hello"              # Basic execution
+./yolobox run whoami                    # Should output: yolo
+./yolobox run pwd                       # Should output: /workspace
+
+# 5. Security tests
+./yolobox run ls /host-home             # Should fail (not mounted)
+./yolobox run env | grep YOLOBOX        # Should show: YOLOBOX=1
+
+# 6. Pre-installed tools
+./yolobox run node --version            # Node.js
+./yolobox run python3 --version         # Python
+./yolobox run which claude              # Claude Code
+./yolobox run gh --version              # GitHub CLI
+
+# 7. Flag tests (flags go AFTER subcommand)
+./yolobox run --env FOO=bar bash -c 'echo $FOO'           # Should output: bar
+./yolobox run --no-network curl https://google.com        # Should fail
+./yolobox run --readonly-project touch /workspace/x       # Should fail
+
+# 8. API key passthrough
+ANTHROPIC_API_KEY=test ./yolobox run printenv ANTHROPIC_API_KEY  # Should output: test
 ```
 
 ## Architecture
@@ -33,6 +79,7 @@ All code lives in `cmd/yolobox/main.go` (~700 lines):
 - Named volumes (`yolobox-home`, `yolobox-cache`, `yolobox-tools`) persist across runs
 - Auto-passthrough of common API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
 - Container user is `yolo` with passwordless sudo
+- Flags are parsed per-subcommand (e.g., `yolobox run --env FOO=bar cmd`, not `yolobox --env FOO=bar run cmd`)
 
 ### Container Behavior
 
@@ -40,10 +87,4 @@ All code lives in `cmd/yolobox/main.go` (~700 lines):
 - `/output` volume created when using `--readonly-project`
 - Sets `YOLOBOX=1` env var inside container
 - Runs as `yolo` user with full sudo access
-
-### Testing
-
-```bash
-make test                           # Run all tests
-go test -v ./cmd/yolobox -run TestName  # Run specific test
-```
+- Host home is NOT mounted unless `--unsafe-host` is passed
