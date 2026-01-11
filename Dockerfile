@@ -88,7 +88,7 @@ RUN mkdir -p /home/yolo/.local/bin && \
 WORKDIR /home/yolo
 
 # Set up a fun prompt and aliases
-RUN echo 'PS1="\\[\\033[1;35m\\]🎲 yolo\\[\\033[0m\\]:\\[\\033[1;36m\\]\\w\\[\\033[0m\\] \\[\\033[33m\\]⚡\\[\\033[0m\\] "' >> ~/.bashrc \
+RUN echo 'PS1="\\[\\033[35m\\]yolo\\[\\033[0m\\]:\\[\\033[36m\\]\\w\\[\\033[0m\\] 🎲 "' >> ~/.bashrc \
     && echo 'alias ll="ls -la"' >> ~/.bashrc \
     && echo 'alias la="ls -A"' >> ~/.bashrc \
     && echo 'alias l="ls -CF"' >> ~/.bashrc \
