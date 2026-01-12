@@ -9,6 +9,8 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
+ENV NVM_DIR=/usr/local/nvm
+ENV BUN_INSTALL=/usr/local/bun
 
 # Install system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -46,10 +48,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 22 LTS
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Install uv (latest)
+# Installs via Astral's installer, then places binaries in /usr/local/bin for all users.
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && for b in uv uvx; do \
+         if [ -f "/root/.local/bin/$b" ]; then install -m 0755 "/root/.local/bin/$b" "/usr/local/bin/$b"; fi; \
+       done \
+    && rm -rf /root/.local/share/uv /root/.local/bin/uv /root/.local/bin/uvx
+
+# Install bun (latest)
+RUN mkdir -p "$BUN_INSTALL" \
+    && curl -fsSL https://bun.sh/install | bash \
+    && chmod -R a+rX "$BUN_INSTALL" \
+    && ln -sf "$BUN_INSTALL/bin/bun" /usr/local/bin/bun \
+    && ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+# Install nvm, then use it to install the latest Node.js LTS and set it as default
+RUN mkdir -p "$NVM_DIR" \
+    && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash \
+    && bash -lc 'source "$NVM_DIR/nvm.sh" \
+      && nvm install --lts \
+      && nvm alias default "lts/*" \
+      && nvm use default \
+      && DEFAULT_NODE="$(nvm version default)" \
+      && ln -sf "$NVM_DIR/versions/node/$DEFAULT_NODE/bin/node" /usr/local/bin/node \
+      && ln -sf "$NVM_DIR/versions/node/$DEFAULT_NODE/bin/npm" /usr/local/bin/npm \
+      && ln -sf "$NVM_DIR/versions/node/$DEFAULT_NODE/bin/npx" /usr/local/bin/npx \
+      && if [ -f "$NVM_DIR/versions/node/$DEFAULT_NODE/bin/corepack" ]; then ln -sf "$NVM_DIR/versions/node/$DEFAULT_NODE/bin/corepack" /usr/local/bin/corepack; fi \
+      && node -v \
+      && npm -v' \
+    && chmod -R a+rX "$NVM_DIR" \
+    && printf '%s\n' \
+      "export NVM_DIR=\"$NVM_DIR\"" \
+      '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' \
+      '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' \
+      > /etc/profile.d/nvm.sh
 
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
